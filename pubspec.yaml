@@ -1,0 +1,44 @@
+name: li_xi_tracker_project
+description: Lì Xì Tracker - Ứng dụng theo dõi tiền lì xì ngày Tết
+
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sqflite: ^2.3.0
+  path: ^1.9.0
+  provider: ^6.1.1
+  shared_preferences: ^2.2.2
+  intl: ^0.18.1
+  fl_chart: ^0.66.2
+  cupertino_icons: ^1.0.6
+  marquee: ^2.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/envelope_front.png
+    - assets/images/envelope_back.png
+    - assets/images/tet_bg.png
+    - assets/images/zodiac/rat.png
+    - assets/images/zodiac/ox.png
+    - assets/images/zodiac/tiger.png
+    - assets/images/zodiac/cat.png
+    - assets/images/zodiac/dragon.png
+    - assets/images/zodiac/snake.png
+    - assets/images/zodiac/horse.png
+    - assets/images/zodiac/goat.png
+    - assets/images/zodiac/monkey.png
+    - assets/images/zodiac/rooster.png
+    - assets/images/zodiac/dog.png
+    - assets/images/zodiac/pig.png
