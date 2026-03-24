@@ -20,7 +20,7 @@ class _ZodiacTalker extends StatelessWidget {
   Widget build(BuildContext context) {
     final msg = hasDrawn
         ? '✨ Đây là lời chúc dành cho bạn!'
-        : 'Bạn chưa nghĩ ra lời chúc sao? Để ${animal.animalName} chọn giúp một câu nhé! 🎋';
+        : 'Bạn chưa nghĩ ra lời chúc sao? Để ${animal.vnName} chọn giúp một câu nhé!';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +46,7 @@ class _ZodiacTalker extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(animal.assetPath, width: 44, height: 44,
+            Image.asset(animal.assetPath, width: 80, height: 80,
                 errorBuilder: (_, __, ___) =>
                     Text(animal.emoji,
                         style: const TextStyle(fontSize: 32))),

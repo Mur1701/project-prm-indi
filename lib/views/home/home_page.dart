@@ -55,9 +55,9 @@ class _HomePageState extends State<HomePage> {
                     // Marquee top 3
                     const HomeMarqueeBanner(),
                     const SizedBox(height: 12),
-                    // Dropdown chọn năm + ngày
-                    const HomeDayDropdown(),
-                    const SizedBox(height: 16),
+                    // // Dropdown chọn năm + ngày
+                    // const HomeDayDropdown(),
+                    // const SizedBox(height: 16),
                     // Donut chart
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),

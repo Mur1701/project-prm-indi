@@ -38,7 +38,7 @@ class SettingsPage extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  Image.asset(animal.assetPath, width: 72, height: 72,
+                  Image.asset(animal.assetPath, width: 120, height: 120,
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) =>
                           Text(animal.emoji,
@@ -46,16 +46,16 @@ class SettingsPage extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(zodiacVM.yearLabel,
                             style: const TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.w800,
+                              fontSize: 20, fontWeight: FontWeight.w800,
                               color: AppTheme.textPrimary)),
                         const SizedBox(height: 4),
                         Text('Năm ${animal.vnName}',
                             style: const TextStyle(
-                                fontSize: 13, color: AppTheme.textHint)),
+                                fontSize: 15, color: AppTheme.textHint)),
                       ],
                     ),
                   ),

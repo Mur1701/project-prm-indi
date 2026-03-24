@@ -51,29 +51,30 @@ class _ReportPageState extends State<ReportPage> {
               fontSize: 22, fontWeight: FontWeight.w800,
               color: AppTheme.textPrimary, letterSpacing: -0.5)),
         // Con giáp năm nay ở bên phải, lật ngang để nhìn vào trái
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()..scale(-1.0, 1.0, 1.0),
-              child: Image.asset(
-                animal.assetPath,
-                width: 40, height: 40,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                    Text(animal.emoji,
-                        style: const TextStyle(fontSize: 32)),
-              ),
-            ),
-          ),
-        ],
+        // actions: [
+        //   Padding(
+        //     padding: const EdgeInsets.only(right: 16),
+        //     child: Transform(
+        //       alignment: Alignment.center,
+        //       transform: Matrix4.identity()..scale(-1.0, 1.0, 1.0),
+        //       child: Image.asset(
+        //         animal.assetPath,
+        //         width: 40, height: 40,
+        //         fit: BoxFit.contain,
+        //         errorBuilder: (_, __, ___) =>
+        //             Text(animal.emoji,
+        //                 style: const TextStyle(fontSize: 32)),
+        //       ),
+        //     ),
+        //   ),
+        // ],
       ),
       body: txVM.isLoading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.red))
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 1),
                   const ReportDaySelector(),
                   const SizedBox(height: 12),
                   Padding(

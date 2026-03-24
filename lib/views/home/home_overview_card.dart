@@ -31,7 +31,7 @@ class HomeOverviewCard extends StatelessWidget {
               // Header gradient
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
+                    horizontal: 10, vertical: 10),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF7F0000), AppTheme.red]),
@@ -42,11 +42,11 @@ class HomeOverviewCard extends StatelessWidget {
                 ),
                 child: const Row(
                   children: [
-                    Text('🧧', style: TextStyle(fontSize: 16)),
+                    Text('🧧', style: TextStyle(fontSize: 10)),
                     SizedBox(width: 8),
                     Text('Tổng quan lì xì',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
                         )),

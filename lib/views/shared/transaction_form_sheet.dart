@@ -29,10 +29,15 @@ class _State extends State<TransactionFormSheet> {
   final _amountCtrl = TextEditingController();
   final _noteCtrl   = TextEditingController();
 
-  TransactionType _type          = TransactionType.receive;
-  Relative?       _selectedRel;   // người thân được chọn
-  DateTime        _date          = DateTime.now();
-  bool            _saving        = false;
+  // Lỗi inline cho từng field
+  String? _amountError;
+  String? _noteError;
+  String? _relativeError;
+
+  TransactionType _type       = TransactionType.receive;
+  Relative?       _selectedRel;
+  DateTime        _date       = DateTime.now();
+  bool            _saving     = false;
 
   bool get _isEdit => widget.transaction != null;
 
@@ -45,7 +50,6 @@ class _State extends State<TransactionFormSheet> {
       _noteCtrl.text   = t.note;
       _type            = t.type;
       _date            = t.dateTime;
-      // Tìm relative từ id
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final relVM = context.read<RelativeViewModel>();
         try {
@@ -94,14 +98,12 @@ class _State extends State<TransactionFormSheet> {
 
   // ── Mở WheelPicker chọn người thân ───────────────────────
   Future<void> _pickRelative() async {
-    final relVM   = context.read<RelativeViewModel>();
-    final items   = relVM.relatives;
+    final relVM = context.read<RelativeViewModel>();
+    final items = relVM.relatives;
     if (items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chưa có người thân nào. Hãy thêm trước!')));
+      setState(() => _relativeError = 'Chưa có người thân nào. Hãy thêm trước!');
       return;
     }
-
     final result = await showWheelPickerSheet<Relative>(
       context:  context,
       items:    items,
@@ -110,53 +112,48 @@ class _State extends State<TransactionFormSheet> {
       title:    'Chọn người thân',
     );
     if (result != null) {
-      setState(() => _selectedRel = result);
+      setState(() {
+        _selectedRel   = result;
+        _relativeError = null; // xóa lỗi khi đã chọn
+      });
     }
-  }
-
-  void _showError(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(msg),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ));
   }
 
   // ── Lưu ───────────────────────────────────────────────────
   Future<void> _save() async {
-    // Lớp 1 - UI validation
-    final amountErr = FormValidators.amount(_amountCtrl.text.trim());
-    if (amountErr != null) {
-      _showError(amountErr);
+    // Reset lỗi cũ
+    setState(() {
+      _amountError   = null;
+      _noteError     = null;
+      _relativeError = null;
+    });
+
+    // Lớp 1 — UI validation, hiển thị inline
+    final amountErr   = FormValidators.amount(_amountCtrl.text.trim());
+    final noteErr     = FormValidators.note(_noteCtrl.text);
+    final relativeErr = (!_isEdit && _selectedRel == null)
+        ? 'Vui lòng chọn người thân' : null;
+
+    if (amountErr != null || noteErr != null || relativeErr != null) {
+      setState(() {
+        _amountError   = amountErr;
+        _noteError     = noteErr;
+        _relativeError = relativeErr;
+      });
       return;
     }
-    final amount = double.parse(_amountCtrl.text.trim());
 
-    final noteErr = FormValidators.note(_noteCtrl.text);
-    if (noteErr != null) {
-      _showError(noteErr);
-      return;
-    }
-
-    if (_selectedRel == null && !_isEdit) {
-      _showError('Vui lòng chọn người thân');
-      return;
-    }
-
+    final amount = double.parse(_amountCtrl.text.trim().replaceAll('.', ''));
     setState(() => _saving = true);
     final txVM = context.read<TransactionViewModel>();
     bool ok;
 
     if (_isEdit) {
       ok = await txVM.updateTransaction(
-        id:    widget.transaction!.id,
+        id:     widget.transaction!.id,
         amount: amount,
-        date:  AppHelpers.toDbDate(_date),
-        note:  _noteCtrl.text.trim(),
+        date:   AppHelpers.toDbDate(_date),
+        note:   _noteCtrl.text.trim(),
       );
     } else {
       ok = await txVM.addTransaction(
@@ -170,11 +167,13 @@ class _State extends State<TransactionFormSheet> {
 
     if (!mounted) return;
     setState(() => _saving = false);
+
     if (ok) {
       Navigator.pop(context);
     } else {
-      final err = context.read<TransactionViewModel>().lastError;
-      if (err != null) _showError(err);
+      // Lớp 2 — backend validation error, hiển thị dưới nút lưu
+      final err = txVM.lastError;
+      if (err != null) setState(() => _amountError = err);
     }
   }
 
@@ -195,27 +194,27 @@ class _State extends State<TransactionFormSheet> {
             // Handle bar
             const SizedBox(height: 12),
             Center(child: Container(
-              width: 36, height: 4,
-              decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2)))),
+                width: 36, height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 14),
 
-            // Tiêu đề modal
+            // Tiêu đề
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(_isEdit ? 'Sửa giao dịch' : 'Thêm giao dịch',
                     style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w800,
-                      color: AppTheme.textPrimary)),
+                        fontSize: 18, fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary)),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close, size: 20),
                   style: IconButton.styleFrom(
-                    backgroundColor: AppTheme.bg,
-                    minimumSize: const Size(32, 32),
-                    padding: EdgeInsets.zero),
+                      backgroundColor: AppTheme.bg,
+                      minimumSize: const Size(32, 32),
+                      padding: EdgeInsets.zero),
                 ),
               ],
             ),
@@ -228,7 +227,13 @@ class _State extends State<TransactionFormSheet> {
             // ── Số tiền ───────────────────────────────────
             const _Label('Số tiền'),
             const SizedBox(height: 8),
-            _AmountField(ctrl: _amountCtrl),
+            _AmountField(
+              ctrl:      _amountCtrl,
+              errorText: _amountError,
+              onChanged: (_) {
+                if (_amountError != null) setState(() => _amountError = null);
+              },
+            ),
             const SizedBox(height: 16),
 
             // ── Người thân ────────────────────────────────
@@ -236,12 +241,13 @@ class _State extends State<TransactionFormSheet> {
             const SizedBox(height: 8),
             _isEdit
                 ? _LockedField(value: _selectedRel != null
-                    ? '${_selectedRel!.name}  (${_selectedRel!.group.value})'
-                    : 'Đang tải...')
+                ? '${_selectedRel!.name}  (${_selectedRel!.group.value})'
+                : 'Đang tải...')
                 : _RelativePicker(
-                    selected:  _selectedRel,
-                    onTap:     _pickRelative,
-                  ),
+              selected:   _selectedRel,
+              onTap:      _pickRelative,
+              errorText:  _relativeError,
+            ),
             const SizedBox(height: 16),
 
             // ── Ngày & Giờ ────────────────────────────────
@@ -279,10 +285,18 @@ class _State extends State<TransactionFormSheet> {
             const SizedBox(height: 8),
             TextField(
               controller: _noteCtrl,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                hintText: 'Thêm ghi chú...',
-                prefixIcon: Icon(Icons.note_outlined)),
+              maxLines:   2,
+              maxLength:  100,
+              onChanged:  (_) {
+                if (_noteError != null) setState(() => _noteError = null);
+              },
+              decoration: InputDecoration(
+                hintText:      'Thêm ghi chú...',
+                prefixIcon:    const Icon(Icons.note_outlined),
+                errorText:     _noteError,
+                errorStyle:    const TextStyle(fontSize: 12, color: AppTheme.red),
+                counterStyle:  const TextStyle(fontSize: 10, color: AppTheme.textHint),
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -292,13 +306,14 @@ class _State extends State<TransactionFormSheet> {
               child: ElevatedButton(
                 onPressed: _saving ? null : _save,
                 child: _saving
-                    ? const SizedBox(width: 20, height: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
+                    ? const SizedBox(
+                    width: 20, height: 20,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
                     : Text(
-                        _isEdit ? 'Cập nhật giao dịch' : 'Lưu giao dịch',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold)),
+                    _isEdit ? 'Cập nhật giao dịch' : 'Lưu giao dịch',
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -327,14 +342,13 @@ class _State extends State<TransactionFormSheet> {
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: sel
                       ? [BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 4, offset: const Offset(0, 2))]
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 4, offset: const Offset(0, 2))]
                       : [],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(width: 6),
                     Text(
                       t.label,
                       style: TextStyle(
@@ -358,4 +372,3 @@ class _State extends State<TransactionFormSheet> {
     );
   }
 }
-

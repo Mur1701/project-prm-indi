@@ -1,7 +1,3 @@
-// ============================================================
-// Biểu đồ đường xu hướng theo giờ trong ngày
-// ============================================================
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +14,6 @@ class ReportTrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Gom tiền theo giờ
     final Map<int, double> recv = {}, give = {};
     for (final t in transactions) {
       final h = t.dateTime.hour;
@@ -29,17 +24,17 @@ class ReportTrendChart extends StatelessWidget {
       }
     }
 
-    // Tạo FlSpot (đơn vị nghìn đồng)
     List<FlSpot> toSpots(Map<int, double> m) => m.entries
         .map((e) => FlSpot(e.key.toDouble(), e.value / 1000))
-        .toList()..sort((a, b) => a.x.compareTo(b.x));
+        .toList()
+      ..sort((a, b) => a.x.compareTo(b.x));
 
     final rSpots = toSpots(recv);
     final gSpots = toSpots(give);
     final hasData = rSpots.isNotEmpty || gSpots.isNotEmpty;
 
     return AppCard(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -47,13 +42,13 @@ class ReportTrendChart extends StatelessWidget {
           const Text('Xu hướng theo giờ',
               style: TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textHint)),
-          const SizedBox(height: 12),
+                  fontWeight: FontWeight.w700, // Đậm hơn tiêu đề
+                  color: AppTheme.textSecondary)),
+          const SizedBox(height: 24),
           SizedBox(
-            height: 155,
+            height: 165, // Tăng nhẹ chiều cao
             child: hasData
-                ? ClipRect(child: LineChart(_chartData(rSpots, gSpots)))
+                ? LineChart(_chartData(rSpots, gSpots))
                 : _EmptyChart(),
           ),
         ],
@@ -62,32 +57,79 @@ class ReportTrendChart extends StatelessWidget {
   }
 
   LineChartData _chartData(List<FlSpot> r, List<FlSpot> g) {
+    final allSpots = [...r, ...g];
+    final realMinX = allSpots.map((s) => s.x).reduce((a, b) => a < b ? a : b);
+    final realMaxX = allSpots.map((s) => s.x).reduce((a, b) => a > b ? a : b);
+
+    // Căn lề X thoáng hơn
+    final minX = realMinX - 0.8;
+    final maxX = realMaxX + 0.8;
+
+    final maxVal = allSpots.isEmpty
+        ? 1.0
+        : allSpots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+
+    final double calculatedMaxY = maxVal * 1.25;
+
     return LineChartData(
+      minY: 0,
+      maxY: calculatedMaxY,
+      minX: minX,
+      maxX: maxX,
+      clipData: const FlClipData.none(),
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
-        getDrawingHorizontalLine: (_) => FlLine(
-            color: AppTheme.divider, strokeWidth: 1),
+        checkToShowHorizontalLine: (value) => value % 2000 == 0 && value != 0,
+        getDrawingHorizontalLine: (value) => FlLine(
+          color: AppTheme.divider.withOpacity(0.8), // Grid rõ nét hơn
+          strokeWidth: 1,
+        ),
       ),
       titlesData: FlTitlesData(
-        leftTitles: AxisTitles(sideTitles: SideTitles(
-          showTitles: true,
-          reservedSize: 36,
-          getTitlesWidget: (v, _) => Text(
-              v >= 1000 ? '${(v/1000).toStringAsFixed(0)}M'
-                  : '${v.toInt()}k',
-              style: const TextStyle(
-                  fontSize: 10, color: AppTheme.textHint)),
-        )),
-        bottomTitles: AxisTitles(sideTitles: SideTitles(
-          showTitles: true,
-          interval: 2,
-          getTitlesWidget: (v, _) => Text(
-              '${v.toInt()}h',
-              style: const TextStyle(
-                  fontSize: 10, color: AppTheme.textHint)),
-        )),
-        topTitles:   const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        leftTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 42,
+            interval: 1000,
+            getTitlesWidget: (v, meta) {
+              if (v > maxVal + 10) return const SizedBox.shrink();
+              String text = v >= 1000 ? '${(v / 1000).toStringAsFixed(0)}M' : '${v.toInt()}';
+              if (v == 0) text = '0';
+              return SideTitleWidget(
+                axisSide: meta.axisSide,
+                space: 10,
+                child: Text(text,
+                    style: const TextStyle(
+                        fontSize: 11, // Tăng size chữ
+                        fontWeight: FontWeight.w600, // Làm chữ rõ hơn
+                        color: AppTheme.textSecondary // Màu đậm hơn textHint
+                    )),
+              );
+            },
+          ),
+        ),
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            interval: 2, // Hiện giờ mỗi 2 tiếng (8h, 10h, 12h...) cho dày hơn
+            getTitlesWidget: (v, meta) {
+              // Chỉ hiện nhãn trong phạm vi dữ liệu thực tế
+              if (v < realMinX - 0.2 || v > realMaxX + 0.2) return const SizedBox.shrink();
+              return SideTitleWidget(
+                axisSide: meta.axisSide,
+                space: 12,
+                child: Text('${v.toInt()}h',
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textSecondary
+                    )),
+              );
+            },
+          ),
+        ),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
       borderData: FlBorderData(show: false),
@@ -98,68 +140,39 @@ class ReportTrendChart extends StatelessWidget {
     );
   }
 
-  LineChartBarData _line(List<FlSpot> spots, Color color) =>
-      LineChartBarData(
-        spots: spots,
-        isCurved: true,
-        color: color,
-        barWidth: 2.5,
-        dotData: const FlDotData(show: false),
-        belowBarData: BarAreaData(
-          show: true,
-          color: color.withOpacity(0.07),
-        ),
-      );
+  LineChartBarData _line(List<FlSpot> spots, Color color) => LineChartBarData(
+    spots: spots,
+    isCurved: true,
+    preventCurveOverShooting: true,
+    color: color,
+    barWidth: 3.5, // Tăng độ dày đường Line một chút cho rõ
+    dotData: const FlDotData(show: false),
+    belowBarData: BarAreaData(
+      show: true,
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [color.withOpacity(0.18), color.withOpacity(0.01)],
+      ),
+    ),
+  );
 }
 
-// ── Empty state: con giáp nói chuyện ─────────────────────────
 class _EmptyChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final animal = context.watch<ZodiacViewModel>().currentAnimal;
-    final w      = MediaQuery.of(context).size.width;
-
+    final w = MediaQuery.of(context).size.width;
     return SizedBox.expand(
       child: Stack(
         children: [
-          // Con giáp ở vị trí 1/3 từ trái, quay sang phải
+          Positioned(left: 0, bottom: 0, child: Image.asset(animal.assetPath, width: 80, height: 80, errorBuilder: (_, __, ___) => Text(animal.emoji, style: const TextStyle(fontSize: 56)))),
           Positioned(
-            left: w * 0.1,           // ~1/3 màn hình (card có padding)
-            bottom: 0,
-            child: Image.asset(
-              animal.assetPath,
-              width:  80,
-              height: 80,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) =>
-                  Text(animal.emoji, style: const TextStyle(fontSize: 56)),
-            ),
-          ),
-
-          // Speech bubble phía trên-phải con giáp
-          Positioned(
-            left:   w * 0.25,         // ngay cạnh phải con giáp
-            bottom: 65,
+            left: w * 0.21, bottom: 52,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.only(
-                  topLeft:     Radius.circular(12),
-                  topRight:    Radius.circular(12),
-                  bottomRight: Radius.circular(12),
-                ),
-                border: Border.all(color: AppTheme.divider),
-                boxShadow: AppTheme.cardShadow,
-              ),
-              child: const Text(
-                'Bạn chưa có lì xì nào :< ',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: AppTheme.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12), bottomRight: Radius.circular(12)), border: Border.all(color: AppTheme.divider), boxShadow: AppTheme.cardShadow),
+              child: const Text('Bạn chưa có lì xì nào :< ', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
             ),
           ),
         ],

@@ -66,7 +66,6 @@ class RelativeViewModel extends ChangeNotifier {
   Future<bool> deleteRelative(int id) async {
     try {
       await _repository.delete(id);
-      // Xóa trực tiếp trong list local thay vì query lại DB (nhanh hơn)
       _relatives.removeWhere((r) => r.id == id);
       notifyListeners();
       return true;

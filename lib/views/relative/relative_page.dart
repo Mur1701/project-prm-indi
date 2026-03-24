@@ -39,7 +39,7 @@ class RelativePage extends StatelessWidget {
               transform: Matrix4.identity()..scale(-1.0, 1.0, 1.0),
               child: Image.asset(
                 animal.assetPath,
-                width: 40, height: 40,
+                width: 50, height: 50,
                 fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) =>
                     Text(animal.emoji,

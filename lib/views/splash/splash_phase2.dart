@@ -25,7 +25,7 @@ class _Phase2 extends StatelessWidget {
     final envW       = w * 0.70;
     final envH       = envW * (1521 / 704);
     final envTop     = topPad + 56.0;
-    final animalSize = envW * 0.30;
+    final animalSize = envW * 0.6;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -57,7 +57,7 @@ class _Phase2 extends StatelessWidget {
 
         // ── Nút "Mở" ở vị trí bông hoa (~22% từ trên ảnh)
         Positioned(
-          top:  envTop + envH * 0.22,
+          top:  envTop + envH * 0.275,
           left: (w - envW) / 2 + envW / 2 - 44,
           child: _OpenButton(pulseAnim: pulseAnim, onTap: onEnter),
         ),

@@ -6,7 +6,9 @@ import '../../domain/validators/user_validator.dart';
 class FormValidators {
   static String? amount(String? value) {
     if (value == null || value.trim().isEmpty) return 'Vui lòng nhập số tiền';
-    final n = double.tryParse(value.trim());
+    // Bỏ dấu chấm ngàn trước khi parse
+    final raw = value.trim().replaceAll('.', '');
+    final n = double.tryParse(raw);
     if (n == null) return 'Số tiền không hợp lệ';
     final r = TransactionValidator.validateAmount(n);
     return r.isValid ? null : r.error;

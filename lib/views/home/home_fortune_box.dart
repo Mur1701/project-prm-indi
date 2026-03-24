@@ -143,4 +143,3 @@ class _HomeFortuneBoxState extends State<HomeFortuneBox>
   }
 }
 
-// Con giáp trong speech bubble
